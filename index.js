@@ -1,16 +1,41 @@
-const express = require('express')
-const app = express()
-const port = 3000 || process.env.PORT
+const express = require("express");
+const app = express();
+const port = 3000 || process.env.PORT;
 const cors = require("cors");
 
 require("dotenv").config();
 
+const admin = require("firebase-admin");
+
+const serviceAccount = require("./verifyfirebasetoken.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
 
 // default middleware
-app.use(cors())
-app.use(express.json())
+app.use(cors());
+app.use(express.json());
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+// Varify User with middleware
+const varifyFirebaseToken = async (req, res, next) => {
+  if (!req.headers?.authorization) {
+    return res.send({ message: "Unauthorize Access" });
+  }
+  const token = req.headers.authorization.split(" ")[1];
+  if (!token) {
+    return res.send({ message: "Unauthorize Access" });
+  }
+  try {
+    const decoded = await admin.auth().verifyIdToken(token);
+    console.log("After token validation", decoded);
+    next();
+  } catch {
+    return res.send({ message: "Unauthorize Access" });
+  }
+};
+
+const { MongoClient, ServerApiVersion } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_NAME}:${process.env.DB_PASSWORD}@cluster0.fqjmyg3.mongodb.net/?appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -19,54 +44,58 @@ const client = new MongoClient(uri, {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
 });
 
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-    const database = client.db('LoanLinkDatabase')
-    const userCollection = database.collection('users')
-    const AllLoanCollection = database.collection('allloan')
+    const database = client.db("LoanLinkDatabase");
+    const userCollection = database.collection("users");
+    const AllLoanCollection = database.collection("allloan");
 
     // User related Apis
-    app.post('/users',async(req,res)=>{
+    app.post("/users", async (req, res) => {
       const user = req.body;
-      console.log(user)
-      user.role = 'borrow';
+      // console.log(user)
+      user.role = "borrow";
       user.createdAt = new Date();
-      
-      // finding user if user already exit or not 
-      const axisUser = await userCollection.findOne({email : user.email});
-      if(axisUser){
-        return res.send({message : 'user already exis'})
+
+      // finding user if user already exit or not
+      const axisUser = await userCollection.findOne({ email: user.email });
+      if (axisUser) {
+        return res.send({ message: "user already exis" });
       }
 
       const result = await userCollection.insertOne(user);
       res.send(result);
-    })
-    app.get('/users/:email/role',async(req,res)=>{
+    });
+    app.get("/users/:email/role", async (req, res) => {
       const email = req.params.email;
-      const query = {email}
+      const query = { email };
       const user = await userCollection.findOne(query);
-      res.send({role : user?.role || 'borrow'})
-    })
-
+      res.send({ role: user?.role || "borrow" });
+    });
 
     // All loan related apis
-    // Get latest 6 card for main section
-    app.get('/alllone/latestloan',async(req,res)=>{
-      const result = await AllLoanCollection.find().limit(6).toArray()
+    app.get("/allloans", async (req, res) => {
+      console.log("token", req.headers.authorization);
+      const result = await AllLoanCollection.find().toArray();
       res.send(result);
-    })
-
-
-
+    });
+    // Get latest 6 card for main section
+    app.get("/loan/latestloan", async (req, res) => {
+      console.log("accesstoken", req.headers);
+      const result = await AllLoanCollection.find().limit(6).toArray();
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
@@ -74,11 +103,10 @@ async function run() {
 }
 run().catch(console.dir);
 
-
-app.get('/', (req, res) => {
-  res.send('Loanlink Server is runing')
-})
+app.get("/", (req, res) => {
+  res.send("Loanlink Server is runing");
+});
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
-})
+  console.log(`Example app listening on port ${port}`);
+});
