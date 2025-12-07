@@ -26,6 +26,44 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+    const database = client.db('LoanLinkDatabase')
+    const userCollection = database.collection('users')
+    const AllLoanCollection = database.collection('allloan')
+
+    // User related Apis
+    app.post('/users',async(req,res)=>{
+      const user = req.body;
+      console.log(user)
+      user.role = 'borrow';
+      user.createdAt = new Date();
+      
+      // finding user if user already exit or not 
+      const axisUser = await userCollection.findOne({email : user.email});
+      if(axisUser){
+        return res.send({message : 'user already exis'})
+      }
+
+      const result = await userCollection.insertOne(user);
+      res.send(result);
+    })
+    app.get('/users/:email/role',async(req,res)=>{
+      const email = req.params.email;
+      const query = {email}
+      const user = await userCollection.findOne(query);
+      res.send({role : user?.role || 'borrow'})
+    })
+
+
+    // All loan related apis
+    // Get latest 6 card for main section
+    app.get('/alllone/latestloan',async(req,res)=>{
+      const result = await AllLoanCollection.find().limit(6).toArray()
+      res.send(result);
+    })
+
+
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
