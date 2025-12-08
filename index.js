@@ -19,6 +19,7 @@ app.use(express.json());
 
 // Varify User with middleware
 const varifyFirebaseToken = async (req, res, next) => {
+  console.log(req.headers?.authorization)
   if (!req.headers?.authorization) {
     return res.send({ message: "Unauthorize Access" });
   }
@@ -35,7 +36,7 @@ const varifyFirebaseToken = async (req, res, next) => {
   }
 };
 
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_NAME}:${process.env.DB_PASSWORD}@cluster0.fqjmyg3.mongodb.net/?appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -85,11 +86,17 @@ async function run() {
       res.send(result);
     });
     // Get latest 6 card for main section
-    app.get("/loan/latestloan", async (req, res) => {
-      console.log("accesstoken", req.headers);
+    app.get("/loan/latestloan/top", async (req, res) => {
+      // console.log("accesstoken", req.headers);
       const result = await AllLoanCollection.find().limit(6).toArray();
       res.send(result);
     });
+    app.get('/allloans/:id',async(req,res)=>{
+      const id = req.params.id;
+      const query = {_id : new ObjectId(id)}
+      const result = await AllLoanCollection.findOne(query)
+      res.send(result)
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
