@@ -55,6 +55,7 @@ async function run() {
     const database = client.db("LoanLinkDatabase");
     const userCollection = database.collection("users");
     const AllLoanCollection = database.collection("allloan");
+    const loanApplicationCollection = database.collection('loanApplication')
 
     // User related Apis
     app.post("/users", async (req, res) => {
@@ -97,6 +98,19 @@ async function run() {
       const result = await AllLoanCollection.findOne(query)
       res.send(result)
     })
+
+
+    // Loan Application Related API
+    app.post('/loanApplication',async(req,res)=>{
+      const data = req.body;
+      data.submittedAt = new Date();
+      data.status = 'pending';
+      data.applicationFeeStatus = 'unpaid';
+      const result = await loanApplicationCollection.insertOne(data);
+      res.send(result)
+    })
+
+    
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
