@@ -110,7 +110,26 @@ async function run() {
       res.send(result)
     })
 
+    // Borrower get his own data
+    app.get('/loanApplication',async(req,res)=>{
+      const email = req.query.email;
+      const query = {}
+      if(email){
+        query.borrowerEmail = email
+      }
+
+      const result = await loanApplicationCollection.find(query).toArray()
+      res.send(result)
+    })
     
+    // delete borower loan application
+    app.delete('/loanApplication/:id',async(req,res)=>{
+      const id = req.params.id;
+      const query = {_id : new ObjectId(id)}
+
+      const result = await loanApplicationCollection.deleteOne(query)
+      res.send(result)
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
