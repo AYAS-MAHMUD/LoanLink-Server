@@ -80,12 +80,24 @@ async function run() {
       res.send({ role: user?.role || "borrow" });
     });
 
+
+
+
+
     // All loan related apis
     app.get("/allloans", async (req, res) => {
-      console.log("token", req.headers.authorization);
-      const result = await AllLoanCollection.find().toArray();
+      
+      // Admin ShowOnHome er True/False control korte parbe
+
+      const updateData = await AllLoanCollection.updateOne()
+      const result = await AllLoanCollection.find({showOnHome:true}).toArray();
       res.send(result);
     });
+
+
+
+
+
     // Get latest 6 card for main section
     app.get("/loan/latestloan/top", async (req, res) => {
       // console.log("accesstoken", req.headers);
@@ -96,6 +108,24 @@ async function run() {
       const id = req.params.id;
       const query = {_id : new ObjectId(id)}
       const result = await AllLoanCollection.findOne(query)
+      res.send(result)
+    })
+
+    // Admin and Manager will Post loan
+    app.post('/allloans',async(req,res)=>{
+      const data = req.body;
+      data.createdAt = new Date()
+      const result = await AllLoanCollection.insertOne(data)
+      res.send(result)
+    })
+    // Manager get his own loan post
+    app.get('/allloans/:email/manageloan',async(req,res)=>{
+      const email = req.params.email;
+      const query = {}
+      if(email){
+        query.email = email
+      }
+      const result = await AllLoanCollection.find(query).toArray()
       res.send(result)
     })
 
