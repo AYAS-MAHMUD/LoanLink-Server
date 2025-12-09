@@ -121,12 +121,17 @@ async function run() {
       const result = await loanApplicationCollection.find(query).toArray()
       res.send(result)
     })
+    app.get('/loanApplication/:id/single',async(req,res)=>{
+      const id = req.params.id;
+      const query = {_id : new ObjectId(id)}
+      const result = await loanApplicationCollection.findOne(query);
+      res.send(result)
+    })
     
     // delete borower loan application
     app.delete('/loanApplication/:id',async(req,res)=>{
       const id = req.params.id;
       const query = {_id : new ObjectId(id)}
-
       const result = await loanApplicationCollection.deleteOne(query)
       res.send(result)
     })
