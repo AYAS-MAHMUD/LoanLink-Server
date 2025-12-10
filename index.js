@@ -88,20 +88,40 @@ async function run() {
     app.get("/allloans", async (req, res) => {
       
       // Admin ShowOnHome er True/False control korte parbe
-      const result = await AllLoanCollection.find({showOnHome:true}).toArray();
+      const result = await AllLoanCollection.find().toArray();
       res.send(result);
     });
 
-
+    // Admin Related API
+    app.get('/allloans/admin',async(req,res)=>{
+      const result = await AllLoanCollection.find().toArray()
+      res.send(result)
+    })
 
 
 
     // Get latest 6 card for main section
     app.get("/loan/latestloan/top", async (req, res) => {
       // console.log("accesstoken", req.headers);
-      const result = await AllLoanCollection.find().sort({createdAt:-1}).limit(6).toArray();
+      const result = await AllLoanCollection.find({showOnHome:true}).sort({createdAt:-1}).limit(6).toArray();
       res.send(result);
     });
+
+    app.patch("/loans/show-on-home/:id", async (req, res) => {
+  const { id } = req.params;
+  const { showOnHome } = req.body;
+
+  const result = await AllLoanCollection.updateOne(
+    { _id: new ObjectId(id) },
+    {
+      $set: { showOnHome },
+    }
+  );
+
+  res.send(result);
+});
+
+
     app.get('/allloans/:id',async(req,res)=>{
       const id = req.params.id;
       const query = {_id : new ObjectId(id)}
@@ -109,10 +129,16 @@ async function run() {
       res.send(result)
     })
 
-    // Admin and Manager will Post loan
+
+
+
+
+
+    //Manager will Post loan
     app.post('/allloans',async(req,res)=>{
       const data = req.body;
       data.createdAt = new Date()
+      // data.pending = 'pending'
       const result = await AllLoanCollection.insertOne(data)
       res.send(result)
     })
@@ -153,7 +179,55 @@ async function run() {
 
     })
 
+
+
+
+
+
     // Loan Application Related API
+
+    // manager get all pending post
+    app.get('/loanApplication/pendingpost',async(req,res)=>{
+      const result = await loanApplicationCollection.find({status : 'pending'}).toArray()
+      res.send(result);
+    })
+    app.get('/loanApplication/approvedpost',async(req,res)=>{
+      const result = await loanApplicationCollection.find({status : 'approved'}).toArray()
+      res.send(result);
+    })
+
+    // manager will approved user
+    app.patch('/loanApplication/approved/:id',async(req,res)=>{
+      const id = req.params.id ;
+      const query = {_id : new ObjectId(id)};
+      // const updateStatus  = {status : 'approved'};
+      const update = {
+        $set : {
+          status : 'approved',
+          approvedData : new Date()
+        }
+      }
+      const result = await loanApplicationCollection.updateOne(query,update)
+      res.send(result)
+    })
+
+    // manager will rejected user
+    app.patch('/loanApplication/rejected/:id',async(req,res)=>{
+      const id = req.params.id ;
+      const query = {_id : new ObjectId(id)};
+      // const updateStatus  = {status : 'approved'};
+      const update = {
+        $set : {
+          status : 'rejected'
+        }
+      }
+      const result = await loanApplicationCollection.updateOne(query,update)
+      res.send(result)
+    })
+
+
+
+    // // borrower post application for loan
     app.post('/loanApplication',async(req,res)=>{
       const data = req.body;
       data.submittedAt = new Date();
