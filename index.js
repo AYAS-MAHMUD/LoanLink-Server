@@ -88,8 +88,6 @@ async function run() {
     app.get("/allloans", async (req, res) => {
       
       // Admin ShowOnHome er True/False control korte parbe
-
-      const updateData = await AllLoanCollection.updateOne()
       const result = await AllLoanCollection.find({showOnHome:true}).toArray();
       res.send(result);
     });
@@ -101,7 +99,7 @@ async function run() {
     // Get latest 6 card for main section
     app.get("/loan/latestloan/top", async (req, res) => {
       // console.log("accesstoken", req.headers);
-      const result = await AllLoanCollection.find().limit(6).toArray();
+      const result = await AllLoanCollection.find().sort({createdAt:-1}).limit(6).toArray();
       res.send(result);
     });
     app.get('/allloans/:id',async(req,res)=>{
@@ -128,7 +126,32 @@ async function run() {
       const result = await AllLoanCollection.find(query).toArray()
       res.send(result)
     })
+    // delete manage loan by manager
+    app.delete('/allloans/:id',async(req,res)=>{
+      const id = req.params.id;
+      const query = {_id : new ObjectId(id)}
+      const result = await AllLoanCollection.deleteOne(query);
+      res.send(result)
+    })
+    // update loan by manager
+    app.patch('/allloans/:id',async(req,res)=>{
+      const id = req.params.id;
+      const updateLoan = req.body;
+      const query = {_id : new ObjectId(id)};
+      const update={
+        $set : {
+          title : updateLoan.title,
+          tagline : updateLoan.tagline,
+          interest : updateLoan.interest,
+          max : updateLoan.max,
+          img : updateLoan.img,
+          tag : updateLoan.tag
+        }
+      }
+      const result  = await AllLoanCollection.updateOne(query,update)
+      res.send(result)
 
+    })
 
     // Loan Application Related API
     app.post('/loanApplication',async(req,res)=>{
