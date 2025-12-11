@@ -2,8 +2,8 @@ const express = require("express");
 const app = express();
 const port = 3000 || process.env.PORT;
 const cors = require("cors");
-
 require("dotenv").config();
+const stripe = require("stripe")(process.env.STRIPE_SECRET);
 
 const admin = require("firebase-admin");
 
@@ -93,11 +93,11 @@ async function run() {
       res.send(result);
     });
 
-    // admin get all user 
-    app.get('/alluser/admin',async(req,res)=>{
-      const result = await userCollection.find({role : 'borrow'}).toArray()
-      res.send(result)
-    })
+    // admin get all user
+    app.get("/alluser/admin", async (req, res) => {
+      const result = await userCollection.find({ role: "borrow" }).toArray();
+      res.send(result);
+    });
 
     // Get latest 6 card for main section
     app.get("/loan/latestloan/top", async (req, res) => {
@@ -192,9 +192,7 @@ async function run() {
 
     // Admin will see all loan application
     app.get("/loanApplication/allApplication", async (req, res) => {
-      const result = await loanApplicationCollection
-        .find()
-        .toArray();
+      const result = await loanApplicationCollection.find().toArray();
       res.send(result);
     });
 
@@ -264,21 +262,69 @@ async function run() {
     });
 
     // ALL DASHBOARD API
-    app.get('/totalloan/admin',async(req,res)=>{
+    app.get("/totalloan/admin", async (req, res) => {
       const result = await AllLoanCollection.find().toArray();
-      res.send(result)
-    })
-    app.get('/pendingapplication/admin',async(req,res)=>{
-      const result = await loanApplicationCollection.find({status : 'pending'}).toArray()
-      res.send(result)
-    })
-    app.get('/approvedapplication/admin',async(req,res)=>{
-      const result = await loanApplicationCollection.find({status : 'approved'}).toArray()
-      res.send(result)
-    })
-    app.get('/totalApplication/admin',async(req,res)=>{
-      const result = await loanApplicationCollection.find().toArray()
-      res.send(result)
+      res.send(result);
+    });
+    app.get("/pendingapplication/admin", async (req, res) => {
+      const result = await loanApplicationCollection
+        .find({ status: "pending" })
+        .toArray();
+      res.send(result);
+    });
+    app.get("/approvedapplication/admin", async (req, res) => {
+      const result = await loanApplicationCollection
+        .find({ status: "approved" })
+        .toArray();
+      res.send(result);
+    });
+    app.get("/totalApplication/admin", async (req, res) => {
+      const result = await loanApplicationCollection.find().toArray();
+      res.send(result);
+    });
+
+    // Payment Related API here
+    app.post("/create-checkout-session", async (req, res) => {
+      const paymentInfo = req.body;
+      
+      const session = await stripe.checkout.sessions.create({
+        line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            unit_amount: 1000, // $10
+            product_data: { name: "Default $10 Payment" },
+          },
+          quantity: 1,
+        },
+      ],
+        // customer_email : paymentInfo.borrowerEmail,
+        mode: "payment",
+        metadata : {
+          parcelId : paymentInfo.application_id
+        },
+        success_url: `${process.env.SIDE_DOMAIN}/dashboard/paymentSuccess?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.SIDE_DOMAIN}/dashboard/paymentCancel`,
+      });
+      console.log(session);
+      res.send({ url : session.url})
+    });
+
+    app.patch('/payment_success',async(req,res)=>{
+      const session_id = req.query.session_id;
+      const session = await stripe.checkout.sessions.retrieve(session_id)
+
+      if(session.payment_status==='paid'){
+        const id = session.metadata.parcelId;
+        const query = {_id : new ObjectId(id)}
+        const update = {
+          $set : {
+            applicationFeeStatus : 'paid'
+          }
+        }
+        const result = await loanApplicationCollection.updateOne(query,update);
+        res.send(result)
+      }
     })
 
 
