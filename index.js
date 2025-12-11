@@ -18,23 +18,23 @@ app.use(cors());
 app.use(express.json());
 
 // Varify User with middleware
-const varifyFirebaseToken = async (req, res, next) => {
-  console.log(req.headers?.authorization);
-  if (!req.headers?.authorization) {
-    return res.send({ message: "Unauthorize Access" });
-  }
-  const token = req.headers.authorization.split(" ")[1];
-  if (!token) {
-    return res.send({ message: "Unauthorize Access" });
-  }
-  try {
-    const decoded = await admin.auth().verifyIdToken(token);
-    console.log("After token validation", decoded);
-    next();
-  } catch {
-    return res.send({ message: "Unauthorize Access" });
-  }
-};
+// const varifyFirebaseToken = async (req, res, next) => {
+//   console.log(req.headers?.authorization);
+//   if (!req.headers?.authorization) {
+//     return res.send({ message: "Unauthorize Access" });
+//   }
+//   const token = req.headers.authorization.split(" ")[1];
+//   if (!token) {
+//     return res.send({ message: "Unauthorize Access" });
+//   }
+//   try {
+//     const decoded = await admin.auth().verifyIdToken(token);
+//     console.log("After token validation", decoded);
+//     next();
+//   } catch {
+//     return res.send({ message: "Unauthorize Access" });
+//   }
+// };
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_NAME}:${process.env.DB_PASSWORD}@cluster0.fqjmyg3.mongodb.net/?appName=Cluster0`;
