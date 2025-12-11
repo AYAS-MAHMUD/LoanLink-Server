@@ -53,7 +53,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
     const database = client.db("LoanLinkDatabase");
     const userCollection = database.collection("users");
     const AllLoanCollection = database.collection("allloan");
@@ -89,20 +89,24 @@ async function run() {
 
     // All loan related apis
     app.get("/allloans", async (req, res) => {
-      const {limit=0,skip=0} = req.query;
-      const result = await AllLoanCollection.find().limit(Number(limit)).skip(Number(skip)).toArray();
+      const {limit=0,skip=0 , search} = req.query;
+      const query = {}
+      if(search){
+        query.title = { $regex: search , $options : 'i'}
+      }
+      const result = await AllLoanCollection.find(query).limit(Number(limit)).skip(Number(skip)).toArray();
       const count = await AllLoanCollection.countDocuments()
       res.send({result,count});
     });
 
     // Admin Related API
-    app.get("/allloans/admin",varifyFirebaseToken,async (req, res) => {
+    app.get("/allloans/admin",async (req, res) => {
       const result = await AllLoanCollection.find().toArray();
       res.send(result);
     });
 
     // admin get all user
-    app.get("/alluser/admin",varifyFirebaseToken, async (req, res) => {
+    app.get("/alluser/admin", async (req, res) => {
       const result = await userCollection.find({ role: "borrow" }).toArray();
       res.send(result);
     });
@@ -338,7 +342,7 @@ async function run() {
 
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
