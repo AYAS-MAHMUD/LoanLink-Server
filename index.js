@@ -19,7 +19,7 @@ app.use(express.json());
 
 // Varify User with middleware
 const varifyFirebaseToken = async (req, res, next) => {
-  console.log(req.headers?.authorization)
+  console.log(req.headers?.authorization);
   if (!req.headers?.authorization) {
     return res.send({ message: "Unauthorize Access" });
   }
@@ -55,7 +55,7 @@ async function run() {
     const database = client.db("LoanLinkDatabase");
     const userCollection = database.collection("users");
     const AllLoanCollection = database.collection("allloan");
-    const loanApplicationCollection = database.collection('loanApplication')
+    const loanApplicationCollection = database.collection("loanApplication");
 
     // User related Apis
     app.post("/users", async (req, res) => {
@@ -80,188 +80,188 @@ async function run() {
       res.send({ role: user?.role || "borrow" });
     });
 
-
-
-
-
     // All loan related apis
     app.get("/allloans", async (req, res) => {
-      
       // Admin ShowOnHome er True/False control korte parbe
       const result = await AllLoanCollection.find().toArray();
       res.send(result);
     });
 
     // Admin Related API
-    app.get('/allloans/admin',async(req,res)=>{
-      const result = await AllLoanCollection.find().toArray()
+    app.get("/allloans/admin", async (req, res) => {
+      const result = await AllLoanCollection.find().toArray();
+      res.send(result);
+    });
+
+    // admin get all user 
+    app.get('/alluser/admin',async(req,res)=>{
+      const result = await userCollection.find({role : 'borrow'}).toArray()
       res.send(result)
     })
-
-
 
     // Get latest 6 card for main section
     app.get("/loan/latestloan/top", async (req, res) => {
       // console.log("accesstoken", req.headers);
-      const result = await AllLoanCollection.find({showOnHome:true}).sort({createdAt:-1}).limit(6).toArray();
+      const result = await AllLoanCollection.find({ showOnHome: true })
+        .sort({ createdAt: -1 })
+        .limit(6)
+        .toArray();
       res.send(result);
     });
 
     app.patch("/loans/show-on-home/:id", async (req, res) => {
-  const { id } = req.params;
-  const { showOnHome } = req.body;
+      const { id } = req.params;
+      const { showOnHome } = req.body;
 
-  const result = await AllLoanCollection.updateOne(
-    { _id: new ObjectId(id) },
-    {
-      $set: { showOnHome },
-    }
-  );
+      const result = await AllLoanCollection.updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: { showOnHome },
+        }
+      );
 
-  res.send(result);
-});
+      res.send(result);
+    });
 
-
-    app.get('/allloans/:id',async(req,res)=>{
+    app.get("/allloans/:id", async (req, res) => {
       const id = req.params.id;
-      const query = {_id : new ObjectId(id)}
-      const result = await AllLoanCollection.findOne(query)
-      res.send(result)
-    })
-
-
-
-
-
+      const query = { _id: new ObjectId(id) };
+      const result = await AllLoanCollection.findOne(query);
+      res.send(result);
+    });
 
     //Manager will Post loan
-    app.post('/allloans',async(req,res)=>{
+    app.post("/allloans", async (req, res) => {
       const data = req.body;
-      data.createdAt = new Date()
+      data.createdAt = new Date();
       // data.pending = 'pending'
-      const result = await AllLoanCollection.insertOne(data)
-      res.send(result)
-    })
+      const result = await AllLoanCollection.insertOne(data);
+      res.send(result);
+    });
     // Manager get his own loan post
-    app.get('/allloans/:email/manageloan',async(req,res)=>{
+    app.get("/allloans/:email/manageloan", async (req, res) => {
       const email = req.params.email;
-      const query = {}
-      if(email){
-        query.email = email
+      const query = {};
+      if (email) {
+        query.email = email;
       }
-      const result = await AllLoanCollection.find(query).toArray()
-      res.send(result)
-    })
+      const result = await AllLoanCollection.find(query).toArray();
+      res.send(result);
+    });
     // delete manage loan by manager
-    app.delete('/allloans/:id',async(req,res)=>{
+    app.delete("/allloans/:id", async (req, res) => {
       const id = req.params.id;
-      const query = {_id : new ObjectId(id)}
+      const query = { _id: new ObjectId(id) };
       const result = await AllLoanCollection.deleteOne(query);
-      res.send(result)
-    })
+      res.send(result);
+    });
     // update loan by manager
-    app.patch('/allloans/:id',async(req,res)=>{
+    app.patch("/allloans/:id", async (req, res) => {
       const id = req.params.id;
       const updateLoan = req.body;
-      const query = {_id : new ObjectId(id)};
-      const update={
-        $set : {
-          title : updateLoan.title,
-          tagline : updateLoan.tagline,
-          interest : updateLoan.interest,
-          max : updateLoan.max,
-          img : updateLoan.img,
-          tag : updateLoan.tag
-        }
-      }
-      const result  = await AllLoanCollection.updateOne(query,update)
-      res.send(result)
-
-    })
-
-
-
-
-
+      const query = { _id: new ObjectId(id) };
+      const update = {
+        $set: {
+          title: updateLoan.title,
+          tagline: updateLoan.tagline,
+          interest: updateLoan.interest,
+          max: updateLoan.max,
+          img: updateLoan.img,
+          tag: updateLoan.tag,
+        },
+      };
+      const result = await AllLoanCollection.updateOne(query, update);
+      res.send(result);
+    });
 
     // Loan Application Related API
 
     // manager get all pending post
-    app.get('/loanApplication/pendingpost',async(req,res)=>{
-      const result = await loanApplicationCollection.find({status : 'pending'}).toArray()
+    app.get("/loanApplication/pendingpost", async (req, res) => {
+      const result = await loanApplicationCollection
+        .find({ status: "pending" })
+        .toArray();
       res.send(result);
-    })
-    app.get('/loanApplication/approvedpost',async(req,res)=>{
-      const result = await loanApplicationCollection.find({status : 'approved'}).toArray()
+    });
+    app.get("/loanApplication/approvedpost", async (req, res) => {
+      const result = await loanApplicationCollection
+        .find({ status: "approved" })
+        .toArray();
       res.send(result);
-    })
+    });
+
+    // Admin will see all loan application
+    app.get("/loanApplication/allApplication", async (req, res) => {
+      const result = await loanApplicationCollection
+        .find()
+        .toArray();
+      res.send(result);
+    });
 
     // manager will approved user
-    app.patch('/loanApplication/approved/:id',async(req,res)=>{
-      const id = req.params.id ;
-      const query = {_id : new ObjectId(id)};
+    app.patch("/loanApplication/approved/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
       // const updateStatus  = {status : 'approved'};
       const update = {
-        $set : {
-          status : 'approved',
-          approvedData : new Date()
-        }
-      }
-      const result = await loanApplicationCollection.updateOne(query,update)
-      res.send(result)
-    })
+        $set: {
+          status: "approved",
+          approvedData: new Date(),
+        },
+      };
+      const result = await loanApplicationCollection.updateOne(query, update);
+      res.send(result);
+    });
 
     // manager will rejected user
-    app.patch('/loanApplication/rejected/:id',async(req,res)=>{
-      const id = req.params.id ;
-      const query = {_id : new ObjectId(id)};
+    app.patch("/loanApplication/rejected/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
       // const updateStatus  = {status : 'approved'};
       const update = {
-        $set : {
-          status : 'rejected'
-        }
-      }
-      const result = await loanApplicationCollection.updateOne(query,update)
-      res.send(result)
-    })
-
-
+        $set: {
+          status: "rejected",
+        },
+      };
+      const result = await loanApplicationCollection.updateOne(query, update);
+      res.send(result);
+    });
 
     // // borrower post application for loan
-    app.post('/loanApplication',async(req,res)=>{
+    app.post("/loanApplication", async (req, res) => {
       const data = req.body;
       data.submittedAt = new Date();
-      data.status = 'pending';
-      data.applicationFeeStatus = 'unpaid';
+      data.status = "pending";
+      data.applicationFeeStatus = "unpaid";
       const result = await loanApplicationCollection.insertOne(data);
-      res.send(result)
-    })
+      res.send(result);
+    });
 
     // Borrower get his own data
-    app.get('/loanApplication',async(req,res)=>{
+    app.get("/loanApplication", async (req, res) => {
       const email = req.query.email;
-      const query = {}
-      if(email){
-        query.borrowerEmail = email
+      const query = {};
+      if (email) {
+        query.borrowerEmail = email;
       }
 
-      const result = await loanApplicationCollection.find(query).toArray()
-      res.send(result)
-    })
-    app.get('/loanApplication/:id/single',async(req,res)=>{
+      const result = await loanApplicationCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.get("/loanApplication/:id/single", async (req, res) => {
       const id = req.params.id;
-      const query = {_id : new ObjectId(id)}
+      const query = { _id: new ObjectId(id) };
       const result = await loanApplicationCollection.findOne(query);
-      res.send(result)
-    })
-    
+      res.send(result);
+    });
+
     // delete borower loan application
-    app.delete('/loanApplication/:id',async(req,res)=>{
+    app.delete("/loanApplication/:id", async (req, res) => {
       const id = req.params.id;
-      const query = {_id : new ObjectId(id)}
-      const result = await loanApplicationCollection.deleteOne(query)
-      res.send(result)
-    })
+      const query = { _id: new ObjectId(id) };
+      const result = await loanApplicationCollection.deleteOne(query);
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
