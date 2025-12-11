@@ -82,9 +82,10 @@ async function run() {
 
     // All loan related apis
     app.get("/allloans", async (req, res) => {
-      // Admin ShowOnHome er True/False control korte parbe
-      const result = await AllLoanCollection.find().toArray();
-      res.send(result);
+      const {limit=0,skip=0} = req.query;
+      const result = await AllLoanCollection.find().limit(Number(limit)).skip(Number(skip)).toArray();
+      const count = await AllLoanCollection.countDocuments()
+      res.send({result,count});
     });
 
     // Admin Related API
@@ -263,7 +264,7 @@ async function run() {
 
     // ALL DASHBOARD API
     app.get("/totalloan/admin", async (req, res) => {
-      const result = await AllLoanCollection.find().toArray();
+      const result = await AllLoanCollection.find().limit(7).toArray();
       res.send(result);
     });
     app.get("/pendingapplication/admin", async (req, res) => {
@@ -279,7 +280,7 @@ async function run() {
       res.send(result);
     });
     app.get("/totalApplication/admin", async (req, res) => {
-      const result = await loanApplicationCollection.find().toArray();
+      const result = await loanApplicationCollection.find().limit(4).toArray();
       res.send(result);
     });
 
