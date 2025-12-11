@@ -263,6 +263,26 @@ async function run() {
       res.send(result);
     });
 
+    // ALL DASHBOARD API
+    app.get('/totalloan/admin',async(req,res)=>{
+      const result = await AllLoanCollection.find().toArray();
+      res.send(result)
+    })
+    app.get('/pendingapplication/admin',async(req,res)=>{
+      const result = await loanApplicationCollection.find({status : 'pending'}).toArray()
+      res.send(result)
+    })
+    app.get('/approvedapplication/admin',async(req,res)=>{
+      const result = await loanApplicationCollection.find({status : 'approved'}).toArray()
+      res.send(result)
+    })
+    app.get('/totalApplication/admin',async(req,res)=>{
+      const result = await loanApplicationCollection.find().toArray()
+      res.send(result)
+    })
+
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
